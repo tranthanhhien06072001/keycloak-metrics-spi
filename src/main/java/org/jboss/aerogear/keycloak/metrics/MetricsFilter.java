@@ -51,6 +51,7 @@ public final class MetricsFilter implements ContainerRequestFilter, ContainerRes
 
         String resource = ResourceExtractor.getResource(req.getUriInfo());
         String uri = ResourceExtractor.getURI(req.getUriInfo());
+        String serviceCode = ResourceExtractor.getServiceCode(req.getUriInfo());
         if (status >= 300 && status < 400) {
             uri = REDIRECTION_URI;
         } else if (status == 404) {
@@ -58,36 +59,38 @@ public final class MetricsFilter implements ContainerRequestFilter, ContainerRes
         }
 
         if (URI_METRICS_ENABLED) {
-            PrometheusExporter.instance().recordResponseTotal(status, req.getMethod(), resource, uri);
+            PrometheusExporter.instance().recordResponseTotal(status, req.getMethod(), resource, serviceCode, uri);
             if (status >= 400) {
-                PrometheusExporter.instance().recordResponseError(status, req.getMethod(), resource, uri);
+                PrometheusExporter.instance().recordResponseError(status, req.getMethod(), resource, serviceCode, uri);
             }
         } else {
-            PrometheusExporter.instance().recordResponseTotal(status, req.getMethod(), resource);
+            PrometheusExporter.instance().recordResponseTotal(status, req.getMethod(), resource, serviceCode);
             if (status >= 400) {
-                PrometheusExporter.instance().recordResponseError(status, req.getMethod(), resource);
+                PrometheusExporter.instance().recordResponseError(status, req.getMethod(), resource, serviceCode);
             }
         }
         // Record request duration if timestamp property is present
         // and only if it is relevant (skip pictures)
-        if (req.getProperty(METRICS_REQUEST_TIMESTAMP) != null &&
-            contentTypeIsRelevant(res)) {
+        if (req.getProperty(METRICS_REQUEST_TIMESTAMP) != null && contentTypeIsRelevant(req, res)) {
             long time = (long) req.getProperty(METRICS_REQUEST_TIMESTAMP);
             long dur = System.currentTimeMillis() - time;
             LOG.trace("Duration is calculated as " + dur + " ms.");
             if (URI_METRICS_ENABLED) {
-                PrometheusExporter.instance().recordRequestDuration(status, dur, req.getMethod(), resource, uri);
+                PrometheusExporter.instance().recordRequestDuration(status, dur, req.getMethod(), resource, serviceCode, uri);
             } else {
-                PrometheusExporter.instance().recordRequestDuration(status, dur, req.getMethod(), resource);
+                PrometheusExporter.instance().recordRequestDuration(status, dur, req.getMethod(), resource, serviceCode);
             }
         }
     }
 
-    private boolean contentTypeIsRelevant(ContainerResponseContext responseContext) {
+    private boolean contentTypeIsRelevant(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
         LOG.trace("Check if is response is relevant " + responseContext.getMediaType());
-        boolean ret = responseContext.getMediaType() != null &&
-            CONTENT_TYPES.stream().anyMatch(type -> type.isCompatible(responseContext.getMediaType()));
-        LOG.trace("Result is " + ret);
+        boolean ret = true;
+        if (!requestContext.getUriInfo().getPath().contains("logout")) {
+            ret = responseContext.getMediaType() != null &&
+                    CONTENT_TYPES.stream().anyMatch(type -> type.isCompatible(responseContext.getMediaType()));
+            LOG.trace("Result is " + ret);
+        }
         return ret;
     }
 }

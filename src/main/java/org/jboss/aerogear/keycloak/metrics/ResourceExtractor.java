@@ -4,6 +4,8 @@ import jakarta.ws.rs.core.UriInfo;
 import org.jboss.logging.Logger;
 
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 class ResourceExtractor {
 
@@ -52,6 +54,18 @@ class ResourceExtractor {
                 sb.append(",");
                 sb.append(matchedURIs.get(matchedURIs.size() - 2));
                 return sb.toString();
+            }
+        }
+        return "";
+    }
+
+    static String getServiceCode(UriInfo uriInfo) {
+        if (!IS_RESOURCE_SCRAPING_DISABLED) {
+            Map<String, String> urlMappings = URLMapping.getData();
+            for (String key : urlMappings.keySet()) {
+                if (Pattern.compile(key).matcher(uriInfo.getPath()).matches()) {
+                    return urlMappings.get(key);
+                }
             }
         }
         return "";

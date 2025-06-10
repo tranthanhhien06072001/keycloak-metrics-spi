@@ -157,39 +157,39 @@ public final class PrometheusExporter {
             responseTotal = Counter.build()
             .name("keycloak_response")
             .help("Total number of responses")
-            .labelNames("code", "method", "resource", "uri")
+            .labelNames("code", "method", "resource", "service_code", "uri")
             .register();
 
             responseErrors = Counter.build()
             .name("keycloak_response_errors")
             .help("Total number of error responses")
-            .labelNames("code", "method", "resource", "uri")
+            .labelNames("code", "method", "resource", "service_code", "uri")
             .register();
 
             requestDuration = Histogram.build()
             .name("keycloak_request_duration")
             .help("Request duration")
             .buckets(50, 100, 250, 500, 1000, 2000, 10000, 30000)
-            .labelNames("code", "method", "resource", "uri")
+            .labelNames("code", "method", "resource", "service_code", "uri")
             .register();
         } else {
             responseTotal = Counter.build()
             .name("keycloak_response")
             .help("Total number of responses")
-            .labelNames("code", "method", "resource")
+            .labelNames("code", "method", "resource", "service_code")
             .register();
 
             responseErrors = Counter.build()
             .name("keycloak_response_errors")
             .help("Total number of error responses")
-            .labelNames("code", "method", "resource")
+            .labelNames("code", "method", "resource", "service_code")
             .register();
 
             requestDuration = Histogram.build()
             .name("keycloak_request_duration")
             .help("Request duration")
             .buckets(50, 100, 250, 500, 1000, 2000, 10000, 30000)
-            .labelNames("code", "method", "resource")
+            .labelNames("code", "method", "resource", "service_code")
             .register();
         }
 
@@ -404,8 +404,8 @@ public final class PrometheusExporter {
      * @param amt    The duration in milliseconds
      * @param method HTTP method of the request
      */
-    public void recordRequestDuration(int code, double amt, String method, String resource, String uri) {
-        requestDuration.labels(Integer.toString(code), method, resource, uri).observe(amt);
+    public void recordRequestDuration(int code, double amt, String method, String resource, String serviceCode, String uri) {
+        requestDuration.labels(Integer.toString(code), method, resource, serviceCode, uri).observe(amt);
         pushAsync();
     }
 
@@ -415,8 +415,8 @@ public final class PrometheusExporter {
      * @param amt    The duration in milliseconds
      * @param method HTTP method of the request
      */
-    public void recordRequestDuration(int code, double amt, String method, String resource) {
-        requestDuration.labels(Integer.toString(code), method, resource).observe(amt);
+    public void recordRequestDuration(int code, double amt, String method, String resource, String serviceCode) {
+        requestDuration.labels(Integer.toString(code), method, resource, serviceCode).observe(amt);
         pushAsync();
     }
 
@@ -426,8 +426,8 @@ public final class PrometheusExporter {
      * @param code   The returned http status code
      * @param method The request method used
      */
-    public void recordResponseTotal(int code, String method, String resource, String uri) {
-        responseTotal.labels(Integer.toString(code), method, resource, uri).inc();
+    public void recordResponseTotal(int code, String method, String resource, String serviceCode, String uri) {
+        responseTotal.labels(Integer.toString(code), method, resource, serviceCode, uri).inc();
         pushAsync();
     }
 
@@ -437,8 +437,8 @@ public final class PrometheusExporter {
      * @param code   The returned http status code
      * @param method The request method used
      */
-    public void recordResponseTotal(int code, String method, String resource) {
-        responseTotal.labels(Integer.toString(code), method, resource).inc();
+    public void recordResponseTotal(int code, String method, String resource, String serviceCode) {
+        responseTotal.labels(Integer.toString(code), method, resource, serviceCode).inc();
         pushAsync();
     }
 
@@ -448,8 +448,8 @@ public final class PrometheusExporter {
      * @param code   The returned http status code
      * @param method The request method used
      */
-    public void recordResponseError(int code, String method, String resource, String uri) {
-        responseErrors.labels(Integer.toString(code), method, resource, uri).inc();
+    public void recordResponseError(int code, String method, String resource, String serviceCode, String uri) {
+        responseErrors.labels(Integer.toString(code), method, resource, serviceCode, uri).inc();
         pushAsync();
     }
 
@@ -459,8 +459,8 @@ public final class PrometheusExporter {
      * @param code   The returned http status code
      * @param method The request method used
      */
-    public void recordResponseError(int code, String method, String resource) {
-        responseErrors.labels(Integer.toString(code), method, resource).inc();
+    public void recordResponseError(int code, String method, String resource, String serviceCode) {
+        responseErrors.labels(Integer.toString(code), method, resource, serviceCode).inc();
         pushAsync();
     }
 
